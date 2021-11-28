@@ -12,7 +12,7 @@ client_socket.connect(ADDR)
 myBoard = [["x ","A","B","C","D","E","F","G","H","I","J"],["1 " ,"X","X","X","X","X","X","X","X","X","X"],["2 ","X","X","X","X","X","X","X","X","X","X"],["3 ","X","X","X","X","X","X","X","X","X","X"],["4 ","X","X","X","X","X","X","X","X","X","X"],["5 ","X","X","X","X","X","X","X","X","X","X"],["6 ","X","X","X","X","X","X","X","X","X","X"],["7 ","X","X","X","X","X","X","X","X","X","X"],["8 ","X","X","X","X","X","X","X","X","X","X"],["9 ","X","X","X","X","X","X","X","X","X","X"],["10","X","X","X","X","X","X","X","X","X","X"]]
 opponentBoard = [["x ","A","B","C","D","E","F","G","H","I","J"],["1 " ,"X","X","X","X","X","X","X","X","X","X"],["2 ","X","X","X","X","X","X","X","X","X","X"],["3 ","X","X","X","X","X","X","X","X","X","X"],["4 ","X","X","X","X","X","X","X","X","X","X"],["5 ","X","X","X","X","X","X","X","X","X","X"],["6 ","X","X","X","X","X","X","X","X","X","X"],["7 ","X","X","X","X","X","X","X","X","X","X"],["8 ","X","X","X","X","X","X","X","X","X","X"],["9 ","X","X","X","X","X","X","X","X","X","X"],["10","X","X","X","X","X","X","X","X","X","X"]]
 
-score = 0
+
 
 dictOfShips = {
     "Carrier" : [5,"C"],
@@ -45,7 +45,7 @@ def recv_msg():
     while True:
         try:
             msg = client_socket.recv(BUFFERSIZE).decode("utf8")
-            checkHitSeccesful(msg)
+            checkMsgType(msg)
         except:
             break
     
@@ -69,7 +69,7 @@ def display():
     for i in range(len(myBoard)):
         print(myBoard[i])
 
-    print("*********************************************Score : "+score)
+    print("*********************************************Score : ",score)
     
 
 # get infos needed to put the ships on the game board and check them whether there is a problem.
@@ -165,11 +165,10 @@ def checkMsgType(msg):
     if "Winner" in msg:
             print(msg)
 
-    elif(msg[0:len(name) != name]):
-        if msg[0:3] == "HIT" :
-            checkHitSeccesful(msg[3:])
+    elif(name not in msg):
+        if "HIT" in msg:
+            checkHitSeccesful(msg[len(msg)-4:])
         
-
         else:
             getOpponentHitInfo(msg)
     
@@ -178,12 +177,12 @@ def checkHitSeccesful(msg):
     x = int(msg[2:4])
     y = dictOfX[msg[0]]
 
-    if myBoard[y][x] != "X":
+    if myBoard[x][y] != "X":
         send_msg(name+"OK")
-        myBoard[y][x] == "O"
+        myBoard[x][y] = "O"
     else:
         send_msg(name+"NOT")
-        myBoard[y][x] == "O"
+        myBoard[x][y] = "O"
 
     
 
@@ -215,6 +214,8 @@ def sendHitCordination():
 def firstMethod():
     global sw
     global sw2
+    global score
+    score = 0
     sw = True
     sw2 = True
     global name 
