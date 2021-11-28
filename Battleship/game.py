@@ -3,16 +3,18 @@ from socket import AF_INET, socket, SOCK_STREAM
 from threading import Thread
 
 HOST = input("Get host's IP : ")
-PORT = 34231
+PORT = int(input("PORT : "))
 BUFFERSIZE = 1024
 ADDR = (HOST, PORT)
 client_socket = socket(AF_INET, SOCK_STREAM)
 client_socket.connect(ADDR)
 
+
+
 myBoard = [["x ","A","B","C","D","E","F","G","H","I","J"],["1 " ,"X","X","X","X","X","X","X","X","X","X"],["2 ","X","X","X","X","X","X","X","X","X","X"],["3 ","X","X","X","X","X","X","X","X","X","X"],["4 ","X","X","X","X","X","X","X","X","X","X"],["5 ","X","X","X","X","X","X","X","X","X","X"],["6 ","X","X","X","X","X","X","X","X","X","X"],["7 ","X","X","X","X","X","X","X","X","X","X"],["8 ","X","X","X","X","X","X","X","X","X","X"],["9 ","X","X","X","X","X","X","X","X","X","X"],["10","X","X","X","X","X","X","X","X","X","X"]]
 opponentBoard = [["x ","A","B","C","D","E","F","G","H","I","J"],["1 " ,"X","X","X","X","X","X","X","X","X","X"],["2 ","X","X","X","X","X","X","X","X","X","X"],["3 ","X","X","X","X","X","X","X","X","X","X"],["4 ","X","X","X","X","X","X","X","X","X","X"],["5 ","X","X","X","X","X","X","X","X","X","X"],["6 ","X","X","X","X","X","X","X","X","X","X"],["7 ","X","X","X","X","X","X","X","X","X","X"],["8 ","X","X","X","X","X","X","X","X","X","X"],["9 ","X","X","X","X","X","X","X","X","X","X"],["10","X","X","X","X","X","X","X","X","X","X"]]
 
-
+needed = [False,0]
 
 dictOfShips = {
     "Carrier" : [5,"C"],
@@ -69,7 +71,7 @@ def display():
     for i in range(len(myBoard)):
         print(myBoard[i])
 
-    print("*********************************************Score : ",score)
+    print("*********************************************Score : ",needed[1])
     
 
 # get infos needed to put the ships on the game board and check them whether there is a problem.
@@ -121,10 +123,11 @@ def getInfoPutShips():
                 continue
         if checkBoard(x,dictOfX[y],ship,direc) :
             putShipOnBoard(x,dictOfX[y],ship,direc)
+            listOfShips.remove(ship)
         else :
             print("Collesion with an old ship ... ")
             time.sleep(2)
-        listOfShips.remove(ship)
+        
 
 
 #make the needed changes on the list to put the ship on the game boards
@@ -154,20 +157,27 @@ def checkBoard(x,y,ship,direc):
 
 
 def getOpponentHitInfo(msg):
+    
     if "OK" in msg:
-        score = score + 1
-    if score >= 14:
-        sw2 = False
+        needed[1] = needed[1] + 1
+    if needed[1] >= 14:
         send_msg(name + " Winner")
-    sw = True
+    
+    
 
 def checkMsgType(msg):
     if "Winner" in msg:
-            print(msg)
+        print(msg)
+    
+    elif "first" in msg:
+        needed[0] = True
 
-    elif(name not in msg):
+    if(name not in msg):
         if "HIT" in msg:
-            checkHitSeccesful(msg[len(msg)-4:])
+            if "10" in msg:
+                checkHitSeccesful(msg[len(msg)-5:])
+            else:
+                checkHitSeccesful(msg[len(msg)-4:])
         
         else:
             getOpponentHitInfo(msg)
@@ -177,12 +187,16 @@ def checkHitSeccesful(msg):
     x = int(msg[2:4])
     y = dictOfX[msg[0]]
 
+    shotted = "O"
+
     if myBoard[x][y] != "X":
         send_msg(name+"OK")
-        myBoard[x][y] = "O"
+        myBoard[x][y] = shotted
     else:
         send_msg(name+"NOT")
-        myBoard[x][y] = "O"
+        myBoard[x][y] = shotted
+    needed[0] = True
+    
 
     
 
@@ -205,29 +219,27 @@ def sendHitCordination():
         sendHitCordination()
     opponentBoard[x][dictOfX[y]] = "O"
     msg = name + "HIT" + str(y) + "/" + str(x)
-
-    sw = False
+    needed[0] = False
     send_msg(msg)
 
 
 
 def firstMethod():
-    global sw
-    global sw2
-    global score
-    score = 0
-    sw = True
-    sw2 = True
+
     global name 
     name = input("Give Your Name : ")
     send_msg(name)
+    
+    
 
     display()
+
     getInfoPutShips()
 
-    while sw2:
-        if sw : 
+    while True:
+        if needed[0]:   
             sendHitCordination()
+
 
 
 
