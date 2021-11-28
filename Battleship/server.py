@@ -16,39 +16,39 @@ print("It is your host ip : "+ SERVER)
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.bind(ADDR)
 
-def gelen_mesaj():
+def recev_msg():
     while True:
         client, client_address = server.accept()
         print("%s:%s connected." %client_address)
         addresses[client] = client_address
-        Thread(target=baglan_clien, args=(client,)).start()
+        Thread(target=connected_client, args=(client,)).start()
 
 
-def baglan_clien(client):
+def connected_client(client):
 
-    isim = client.recv(BUFFERSIZE).decode("utf8")
-    print(isim)
-    clients[client] = isim
+    name = client.recv(BUFFERSIZE).decode("utf8")
+    print(name)
+    clients[client] = name
     if firstPlayer[0]:
-        yayin(bytes("first ","utf8"))
+        stream(bytes("first ","utf8"))
         firstPlayer[0] = False
     while True:
         msg = client.recv(BUFFERSIZE)
-        yayin(msg)
+        stream(msg)
 
 
-def yayin(msg):
+def stream(msg):
     
-    for yayim in clients:
+    for i in clients:
         if firstPlayer[0]:
-            yayim.send(bytes("first ","utf8"))
+            i.send(bytes("first ","utf8"))
             firstPlayer[0] = False
-        yayim.send(bytes(msg))
+        i.send(bytes(msg))
 
 if __name__ == "__main__":
     server.listen(2) 
     print("Connection is waited ...")
-    ACCEPT_THREAD = Thread(target=gelen_mesaj())
+    ACCEPT_THREAD = Thread(target=recev_msg())
     ACCEPT_THREAD.start()
     ACCEPT_THREAD.join()
     server.close()
