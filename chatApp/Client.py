@@ -46,17 +46,14 @@ gonder_buton.pack()
 
 app.protocol("WM_DELETE_WİNDOW", cikis_durumu)
 
-HOST = '192.168.56.1'
-PORT = 34231
+HOST = input("Get HOST's IP : ")
+PORT = 34000
 BUFFERSIZE = 1024
 ADDR = (HOST, PORT)
 client_socket = socket(AF_INET, SOCK_STREAM)
 client_socket.connect(ADDR)
 
-if not PORT:
-    PORT = 32456
-else:
-    PORT = int(PORT)
+
 
 gelen_thread = Thread(target=gelen_mesaj)
 gelen_thread.start()

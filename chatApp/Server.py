@@ -6,10 +6,10 @@ clients = {}
 addresses = {}
 
 SERVER = socket.gethostbyname(socket.gethostname())#'127.0.0.1' # localhost, IP adressi yerel, dyndns
-PORT = 34231
+PORT = 34000
 BUFFERSIZE = 1024
 ADDR = (SERVER, PORT)
-
+print(SERVER)
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.bind(ADDR)
