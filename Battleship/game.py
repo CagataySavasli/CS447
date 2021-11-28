@@ -1,7 +1,18 @@
 import time
+from socket import AF_INET, socket, SOCK_STREAM
+from threading import Thread
+
+HOST = input("Get host's IP : ")
+PORT = 34231
+BUFFERSIZE = 1024
+ADDR = (HOST, PORT)
+client_socket = socket(AF_INET, SOCK_STREAM)
+client_socket.connect(ADDR)
 
 myBoard = [["x ","A","B","C","D","E","F","G","H","I","J"],["1 " ,"X","X","X","X","X","X","X","X","X","X"],["2 ","X","X","X","X","X","X","X","X","X","X"],["3 ","X","X","X","X","X","X","X","X","X","X"],["4 ","X","X","X","X","X","X","X","X","X","X"],["5 ","X","X","X","X","X","X","X","X","X","X"],["6 ","X","X","X","X","X","X","X","X","X","X"],["7 ","X","X","X","X","X","X","X","X","X","X"],["8 ","X","X","X","X","X","X","X","X","X","X"],["9 ","X","X","X","X","X","X","X","X","X","X"],["10","X","X","X","X","X","X","X","X","X","X"]]
 opponentBoard = [["x ","A","B","C","D","E","F","G","H","I","J"],["1 " ,"X","X","X","X","X","X","X","X","X","X"],["2 ","X","X","X","X","X","X","X","X","X","X"],["3 ","X","X","X","X","X","X","X","X","X","X"],["4 ","X","X","X","X","X","X","X","X","X","X"],["5 ","X","X","X","X","X","X","X","X","X","X"],["6 ","X","X","X","X","X","X","X","X","X","X"],["7 ","X","X","X","X","X","X","X","X","X","X"],["8 ","X","X","X","X","X","X","X","X","X","X"],["9 ","X","X","X","X","X","X","X","X","X","X"],["10","X","X","X","X","X","X","X","X","X","X"]]
+
+score = 0
 
 dictOfShips = {
     "Carrier" : [5,"C"],
@@ -24,6 +35,27 @@ dictOfX = {
     "J" : 10,
 }
 
+# CLIENT PART :
+
+def send_msg(msg):
+    msg = msg + " "
+    client_socket.send(bytes(msg,"utf8"))
+
+def recv_msg():
+    while True:
+        try:
+            msg = client_socket.recv(BUFFERSIZE).decode("utf8")
+            checkHitSeccesful(msg)
+        except:
+            break
+    
+
+client_thread = Thread(target=recv_msg)
+client_thread.start()
+
+
+# GAME PART : 
+
 # Print the game boards on the terminal.
 def display():
 
@@ -37,7 +69,7 @@ def display():
     for i in range(len(myBoard)):
         print(myBoard[i])
 
-    print("********************************************************")
+    print("*********************************************Score : "+score)
     
 
 # get infos needed to put the ships on the game board and check them whether there is a problem.
@@ -83,7 +115,7 @@ def getInfoPutShips():
             continue
         else:
 
-            if (direc == "v" and dictOfX[y]+dictOfShips[ship][0] > 10) or (direc == "h" and x+dictOfShips[ship][0] > 10) :
+            if (direc == "v" and x+dictOfShips[ship][0] > 10) or (direc == "h" and dictOfX[y]+dictOfShips[ship][0] > 10) :
                 print("Out of range ...")
                 time.sleep(2)
                 continue
@@ -94,15 +126,14 @@ def getInfoPutShips():
             time.sleep(2)
         listOfShips.remove(ship)
 
-    print("allahım")
 
 #make the needed changes on the list to put the ship on the game boards
 def putShipOnBoard(x,y,ship,direc):
     if direc == "v" :
-        for i in range(x,x+dictOfShips[ship][0]+1):
+        for i in range(x,x+dictOfShips[ship][0]):
             myBoard[i][y] = dictOfShips[ship][1]
     elif direc == "h" :
-        for i in range(y,y+dictOfShips[ship][0]+1):
+        for i in range(y,y+dictOfShips[ship][0]):
             myBoard[x][i] = dictOfShips[ship][1]
     print("The ship has been successfully placed on the game board ...")
     time.sleep(2)
@@ -112,23 +143,91 @@ def putShipOnBoard(x,y,ship,direc):
 #check collection while put ships on game board
 def checkBoard(x,y,ship,direc):
     if direc == "v" :
-        for i in range(x,x+dictOfShips[ship][0]+1):
+        for i in range(x,x+dictOfShips[ship][0]):
             if not myBoard[i][y] == "X" :
                 return False
     elif direc == "h" :
-        for i in range(y,y+dictOfShips[ship][0]+1):
+        for i in range(y,y+dictOfShips[ship][0]):
             if not myBoard[x][i] == "X" :
                 return False
     return True     
 
 
-def getOpponentHitInfo():
-    pass
+def getOpponentHitInfo(msg):
+    if "OK" in msg:
+        score = score + 1
+    if score >= 14:
+        sw2 = False
+        send_msg(name + " Winner")
+    sw = True
 
-def shareHitInfo():
-    pass
+def checkMsgType(msg):
+    if "Winner" in msg:
+            print(msg)
+
+    elif(msg[0:len(name) != name]):
+        if msg[0:3] == "HIT" :
+            checkHitSeccesful(msg[3:])
+        
+
+        else:
+            getOpponentHitInfo(msg)
+    
+
+def checkHitSeccesful(msg):
+    x = int(msg[2:4])
+    y = dictOfX[msg[0]]
+
+    if myBoard[y][x] != "X":
+        send_msg(name+"OK")
+        myBoard[y][x] == "O"
+    else:
+        send_msg(name+"NOT")
+        myBoard[y][x] == "O"
+
+    
+
+
+    print(x,y)
+
+def sendHitCordination():
+    display()
+    print("Give the cordination of hitting...")
+    y = input("Choose the X coordinate : ")
+    if y not in ["A","B","C","D","E","F","G","H","I","J"]:
+        print("Undefined input ...")
+        time.sleep(2)
+        sendHitCordination()
+        
+    x = int(input("Choose the Y coordinate : "))
+    if x not in range(1,11):
+        print("Undefined input ...")
+        time.sleep(2)
+        sendHitCordination()
+    opponentBoard[x][dictOfX[y]] = "O"
+    msg = name + "HIT" + str(y) + "/" + str(x)
+
+    sw = False
+    send_msg(msg)
 
 
 
-display()
-getInfoPutShips()
+def firstMethod():
+    global sw
+    global sw2
+    sw = True
+    sw2 = True
+    global name 
+    name = input("Give Your Name : ")
+    send_msg(name)
+
+    display()
+    getInfoPutShips()
+
+    while sw2:
+        if sw : 
+            sendHitCordination()
+
+
+
+firstMethod()
