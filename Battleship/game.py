@@ -1,6 +1,10 @@
 import time
 from socket import AF_INET, socket, SOCK_STREAM
 from threading import Thread
+import os
+from colorama import init, Fore
+
+init(autoreset=True)
 
 HOST = input("Get host's IP : ")
 PORT = int(input("PORT : "))
@@ -11,10 +15,12 @@ client_socket.connect(ADDR)
 
 
 
-myBoard = [["x ","A","B","C","D","E","F","G","H","I","J"],["1 " ,"X","X","X","X","X","X","X","X","X","X"],["2 ","X","X","X","X","X","X","X","X","X","X"],["3 ","X","X","X","X","X","X","X","X","X","X"],["4 ","X","X","X","X","X","X","X","X","X","X"],["5 ","X","X","X","X","X","X","X","X","X","X"],["6 ","X","X","X","X","X","X","X","X","X","X"],["7 ","X","X","X","X","X","X","X","X","X","X"],["8 ","X","X","X","X","X","X","X","X","X","X"],["9 ","X","X","X","X","X","X","X","X","X","X"],["10","X","X","X","X","X","X","X","X","X","X"]]
-opponentBoard = [["x ","A","B","C","D","E","F","G","H","I","J"],["1 " ,"X","X","X","X","X","X","X","X","X","X"],["2 ","X","X","X","X","X","X","X","X","X","X"],["3 ","X","X","X","X","X","X","X","X","X","X"],["4 ","X","X","X","X","X","X","X","X","X","X"],["5 ","X","X","X","X","X","X","X","X","X","X"],["6 ","X","X","X","X","X","X","X","X","X","X"],["7 ","X","X","X","X","X","X","X","X","X","X"],["8 ","X","X","X","X","X","X","X","X","X","X"],["9 ","X","X","X","X","X","X","X","X","X","X"],["10","X","X","X","X","X","X","X","X","X","X"]]
+myBoard = [["x ","A","B","C","D","E","F","G","H","I","J"],["1 " ,"~","~","~","~","~","~","~","~","~","~"],["2 ","~","~","~","~","~","~","~","~","~","~"],["3 ","~","~","~","~","~","~","~","~","~","~"],["4 ","~","~","~","~","~","~","~","~","~","~"],["5 ","~","~","~","~","~","~","~","~","~","~"],["6 ","~","~","~","~","~","~","~","~","~","~"],["7 ","~","~","~","~","~","~","~","~","~","~"],["8 ","~","~","~","~","~","~","~","~","~","~"],["9 ","~","~","~","~","~","~","~","~","~","~"],["10","~","~","~","~","~","~","~","~","~","~"]]
+opponentBoard = [["~ ","A","B","C","D","E","F","G","H","I","J"],["1 " ,"~","~","~","~","~","~","~","~","~","~"],["2 ","~","~","~","~","~","~","~","~","~","~"],["3 ","~","~","~","~","~","~","~","~","~","~"],["4 ","~","~","~","~","~","~","~","~","~","~"],["5 ","~","~","~","~","~","~","~","~","~","~"],["6 ","~","~","~","~","~","~","~","~","~","~"],["7 ","~","~","~","~","~","~","~","~","~","~"],["8 ","~","~","~","~","~","~","~","~","~","~"],["9 ","~","~","~","~","~","~","~","~","~","~"],["10","~","~","~","~","~","~","~","~","~","~"]]
 
-needed = [False,0]
+needed = [False,0,True]
+
+hitList = []
 
 dictOfShips = {
     "Carrier" : [5,"C"],
@@ -61,17 +67,55 @@ client_thread.start()
 # Print the game boards on the terminal.
 def display():
 
-    print("\nOppenent Board : ")    
+    print("\nOppenent's Board : ")    
     for i in range(len(opponentBoard)):
-        print(opponentBoard[i])
+        for j in range(len(opponentBoard[1])):
+            if i == 0 or j == 0 or opponentBoard[i][j] == "~":
+                print(opponentBoard[i][j], end = " | ")
 
-    print("________________________________________________________")
+            elif opponentBoard[i][j] == "C":
+                print(Fore.GREEN+'C', end = " | ")
 
-    print("My Board : ")
+            elif opponentBoard[i][j] == "B":
+                print(Fore.BLUE+'B', end = " | ")
+
+            elif opponentBoard[i][j] == "S":
+                print(Fore.YELLOW+'S', end = " | ")
+
+            elif opponentBoard[i][j] == "D":
+                print(Fore.MAGENTA+'D', end = " | ")
+
+            elif opponentBoard[i][j] == "X":
+                print(Fore.RED+'X', end = " | ")
+
+        print()
+
+    print("____________________________________________")
+
+    print(name+"'s Board : ")
     for i in range(len(myBoard)):
-        print(myBoard[i])
+        for j in range(len(myBoard[1])):
+            if i == 0 or j == 0 or myBoard[i][j] == "~":
+                print(myBoard[i][j], end = " | ")
 
-    print("*********************************************Score : ",needed[1])
+            elif myBoard[i][j] == "C":
+                print(Fore.GREEN+'C', end = " | ")
+
+            elif myBoard[i][j] == "B":
+                print(Fore.BLUE+'B', end = " | ")
+
+            elif myBoard[i][j] == "S":
+                print(Fore.YELLOW+'S', end = " | ")
+
+            elif myBoard[i][j] == "D":
+                print(Fore.MAGENTA+'D', end = " | ")
+
+            elif myBoard[i][j] == "X":
+                print(Fore.RED+'X', end = " | ")
+
+        print()
+
+    print("******************************** Score : ",needed[1])
     
 
 # get infos needed to put the ships on the game board and check them whether there is a problem.
@@ -147,11 +191,11 @@ def putShipOnBoard(x,y,ship,direc):
 def checkBoard(x,y,ship,direc):
     if direc == "v" :
         for i in range(x,x+dictOfShips[ship][0]):
-            if not myBoard[i][y] == "X" :
+            if not myBoard[i][y] == "~" :
                 return False
     elif direc == "h" :
         for i in range(y,y+dictOfShips[ship][0]):
-            if not myBoard[x][i] == "X" :
+            if not myBoard[x][i] == "~" :
                 return False
     return True     
 
@@ -167,7 +211,12 @@ def getOpponentHitInfo(msg):
 
 def checkMsgType(msg):
     if "Winner" in msg:
-        print(msg)
+        needed[2] = False
+        needed[0] = False
+        os.system("clear")
+        display()
+        print("     ~ ~ ~" + msg + "~ ~ ~")
+        
     
     elif "first" in msg:
         needed[0] = True
@@ -187,9 +236,9 @@ def checkHitSeccesful(msg):
     x = int(msg[2:4])
     y = dictOfX[msg[0]]
 
-    shotted = "O"
+    shotted = "X"
 
-    if myBoard[x][y] != "X":
+    if myBoard[x][y] != "~":
         send_msg(name+"OK")
         myBoard[x][y] = shotted
     else:
@@ -217,10 +266,17 @@ def sendHitCordination():
         print("Undefined input ...")
         time.sleep(2)
         sendHitCordination()
-    opponentBoard[x][dictOfX[y]] = "O"
     msg = name + "HIT" + str(y) + "/" + str(x)
-    needed[0] = False
-    send_msg(msg)
+
+    if msg in hitList:
+        print("You already hit this cordinate chose another one ...")
+        time.sleep(2)
+        sendHitCordination()
+    else :
+        hitList.append(msg)
+        opponentBoard[x][dictOfX[y]] = "X"    
+        needed[0] = False
+        send_msg(msg)
 
 
 
@@ -229,14 +285,9 @@ def firstMethod():
     global name 
     name = input("Give Your Name : ")
     send_msg(name)
-    
-    
-
     display()
-
     getInfoPutShips()
-
-    while True:
+    while needed[2]:
         if needed[0]:   
             sendHitCordination()
 
